@@ -54,6 +54,7 @@ limitations under the License.
 #include "midend/expandEmit.h"
 #include "midend/tableHit.h"
 #include "midend/midEndLast.h"
+#include "midend/fillEnumMap.h"
 
 namespace BMV2 {
 
@@ -119,9 +120,12 @@ SimpleSwitchMidEnd::SimpleSwitchMidEnd(CompilerOptions& options) : MidEnd(option
             new VisitFunctor([this, evaluator]() { toplevel = evaluator->getToplevelBlock(); }),
         });
     } else {
+        auto fillEnumMap = new P4::FillEnumMap(new EnumOn32Bits("v1model.p4"), &typeMap);
         addPasses({
             new P4::ResolveReferences(&refMap),
             new P4::TypeChecking(&refMap, &typeMap),
+            fillEnumMap,
+            new VisitFunctor([this, fillEnumMap]() { enumMap = fillEnumMap->repr; }),
         });
         auto evaluator = new P4::EvaluatorPass(&refMap, &typeMap);
         addPasses({
